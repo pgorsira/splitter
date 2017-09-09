@@ -1,5 +1,7 @@
 pragma solidity ^0.4.4;
 
+import "./SafeMath.sol";
+
 contract Splitter {
 
     address public owner;
@@ -18,24 +20,20 @@ contract Splitter {
     }
 
     function () payable {
-        if (msg.sender != donator) { // Only allow the donator to send ether
-            revert();
-        }
+        require(msg.sender == donator);
 
         uint remainder = msg.value % 2;
-        owedBalances[donator] += remainder;
+        owedBalances[donator] = SafeMath.add(owedBalances[donator], remainder);
         
-        uint toPayout = (msg.value - remainder) / 2;
-        owedBalances[beneficiary1] += toPayout;
-        owedBalances[beneficiary2] += toPayout;
+        uint toPayout = SafeMath.div(SafeMath.sub(msg.value, remainder), 2);
+        owedBalances[beneficiary1] = SafeMath.add(owedBalances[beneficiary1], toPayout);
+        owedBalances[beneficiary2] = SafeMath.add(owedBalances[beneficiary2], toPayout);
     }
 
     function withdraw() public returns(bool) {
         address recipient = msg.sender; 
         uint tmpBalance = owedBalances[recipient];
-        if (tmpBalance == 0) {
-            revert();
-        }
+        assert(tmpBalance != 0);
 
         owedBalances[recipient] = 0;
         if (!recipient.send(tmpBalance)) {
