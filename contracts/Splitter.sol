@@ -10,16 +10,19 @@ contract Splitter {
     address public beneficiary1;
     address public beneficiary2;
 
+    event Donation(address donator, address beneficiary1, address beneficiary2, uint amountDonated);
+    event Withdrawal(address withdrawer, uint amounWithdrawn);
+
     mapping (address => uint) owedBalances;
 
-    function Splitter(address _donator, address _beneficiary1, address _beneficiary2) {
+    function Splitter(address _donator, address _beneficiary1, address _beneficiary2) public {
         owner = msg.sender;
         donator = _donator;
         beneficiary1 = _beneficiary1;
         beneficiary2 = _beneficiary2;
     }
 
-    function () payable {
+    function () payable public {
         require(msg.sender == donator);
 
         uint remainder = msg.value % 2;
@@ -28,6 +31,8 @@ contract Splitter {
         uint toPayout = SafeMath.div(SafeMath.sub(msg.value, remainder), 2);
         owedBalances[beneficiary1] = SafeMath.add(owedBalances[beneficiary1], toPayout);
         owedBalances[beneficiary2] = SafeMath.add(owedBalances[beneficiary2], toPayout);
+
+        Donation(donator, beneficiary1, beneficiary2, msg.value);
     }
 
     function withdraw() public returns(bool) {
@@ -39,6 +44,7 @@ contract Splitter {
         if (!recipient.send(tmpBalance)) {
             revert();
         }
+        Withdrawal(recipient, tmpBalance);
         return true;
     }
 
