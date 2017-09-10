@@ -10,8 +10,8 @@ contract Splitter {
     address public beneficiary1;
     address public beneficiary2;
 
-    event Donation(address donator, address beneficiary1, address beneficiary2, uint amountDonated);
-    event Withdrawal(address withdrawer, uint amounWithdrawn);
+    event Donation(address _donator, address _beneficiary1, address _beneficiary2, uint _amountDonated);
+    event Withdrawal(address _withdrawer, uint _amounWithdrawn);
 
     mapping (address => uint) owedBalances;
 
