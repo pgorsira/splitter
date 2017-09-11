@@ -15,9 +15,12 @@ contract('Splitter', function(accounts) {
   var beneficiary2Balance;
 
   beforeEach(function() {
-    return Splitter.new(donator, beneficiary1, beneficiary2, {from: owner})
+    return Splitter.new({from: owner})
     .then(function(instance){
-      contract = instance;
+        contract = instance;
+        return contract.declareBeneficiaries(beneficiary1, beneficiary2, {from: donator})
+      })
+      .then(function(txn){
         return web3.eth.getBalance(donator);
       })
       .then(function(_donatorBalance){

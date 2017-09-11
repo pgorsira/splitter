@@ -2,7 +2,9 @@ pragma solidity ^0.4.4;
 
 import "./SafeMath.sol";
 
-contract Splitter is Owned {
+contract Splitter {
+
+    address public owner;
 
     struct BeneficiaryPolicy {
         address beneficiary1;
@@ -14,7 +16,9 @@ contract Splitter is Owned {
     event Split(address _benefactor, address _beneficiary1, address _beneficiary2, uint _amountSent);
     event Withdrawal(address _withdrawer, uint _amountWithdrawn);
 
-    function Splitter() public {}
+    function Splitter() public {
+        owner = msg.sender;
+    }
 
     function declareBeneficiaries(address _beneficiary1, address _beneficiary2) public returns(bool) {
         // Require distinct entities for simplicity
