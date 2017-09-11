@@ -2,37 +2,48 @@ pragma solidity ^0.4.4;
 
 import "./SafeMath.sol";
 
-contract Splitter {
+contract Splitter is Owned {
 
-    address public owner;
-
-    address public donator;
-    address public beneficiary1;
-    address public beneficiary2;
-
-    event Donation(address _donator, address _beneficiary1, address _beneficiary2, uint _amountDonated);
-    event Withdrawal(address _withdrawer, uint _amounWithdrawn);
-
+    struct BeneficiaryPolicy {
+        address beneficiary1;
+        address beneficiary2;
+    }
+    mapping (address => BeneficiaryPolicy) beneficiaryPolicies;
     mapping (address => uint) owedBalances;
+    
+    event Split(address _benefactor, address _beneficiary1, address _beneficiary2, uint _amountSent);
+    event Withdrawal(address _withdrawer, uint _amountWithdrawn);
 
-    function Splitter(address _donator, address _beneficiary1, address _beneficiary2) public {
-        owner = msg.sender;
-        donator = _donator;
-        beneficiary1 = _beneficiary1;
-        beneficiary2 = _beneficiary2;
+    function Splitter() public {}
+
+    function declareBeneficiaries(address _beneficiary1, address _beneficiary2) public returns(bool) {
+        // Require distinct entities for simplicity
+        require(msg.sender != _beneficiary1);
+        require(msg.sender != _beneficiary2);
+        require(_beneficiary1 != _beneficiary2);
+
+        beneficiaryPolicies[msg.sender] = BeneficiaryPolicy(_beneficiary1, _beneficiary2);
+
+        return true;
     }
 
-    function () payable public {
-        require(msg.sender == donator);
+    function () payable public {    
+        address benefactor = msg.sender;
+        address beneficiary1 = beneficiaryPolicies[msg.sender].beneficiary1;
+        address beneficiary2 = beneficiaryPolicies[msg.sender].beneficiary2;
+
+        // Validate that this benefactor has set up a beneficiary policy
+        require(beneficiary1 != address(0));
+        require(beneficiary2 != address(0));
 
         uint remainder = msg.value % 2;
-        owedBalances[donator] = SafeMath.add(owedBalances[donator], remainder);
+        owedBalances[benefactor] = SafeMath.add(owedBalances[benefactor], remainder);
         
         uint toPayout = SafeMath.div(SafeMath.sub(msg.value, remainder), 2);
         owedBalances[beneficiary1] = SafeMath.add(owedBalances[beneficiary1], toPayout);
         owedBalances[beneficiary2] = SafeMath.add(owedBalances[beneficiary2], toPayout);
 
-        Donation(donator, beneficiary1, beneficiary2, msg.value);
+        Split(benefactor, beneficiary1, beneficiary2, msg.value);
     }
 
     function withdraw() public returns(bool) {
